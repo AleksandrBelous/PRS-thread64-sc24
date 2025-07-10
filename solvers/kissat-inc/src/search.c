@@ -17,6 +17,22 @@
 
 #include <inttypes.h>
 
+#include "bump.h"  // для kissat_shuffle_score
+#include "learn.h" // для kissat_importUnitClauses и kissat_importClauses
+/*
+Добавил #include "bump.h" и #include "learn.h" для решения проблем:
+../src/search.c: В функции «kissat_search»:
+../src/search.c:170:7: ошибка: неявная декларация функции «kissat_shuffle_score» [-Wimplicit-function-declaration]
+  170 |       kissat_shuffle_score(solver);
+      |       ^~~~~~~~~~~~~~~~~~~~
+../src/search.c:175:12: ошибка: неявная декларация функции «kissat_importUnitClauses» [-Wimplicit-function-declaration]
+  175 |       if (!kissat_importUnitClauses(solver)) return 20;
+      |            ^~~~~~~~~~~~~~~~~~~~~~~~
+../src/search.c:176:12: ошибка: неявная декларация функции «kissat_importClauses» [-Wimplicit-function-declaration]
+  176 |       if (!kissat_importClauses(solver)) return 20;
+      |            ^~~~~~~~~~~~~~~~~~~~
+*/
+
 static void
 start_search(kissat *solver)
 {
@@ -170,10 +186,13 @@ int kissat_search(kissat *solver)
       kissat_shuffle_score(solver);
       solver->reseting = 0;
     }
-    if (!solver->level) {
+    if (!solver->level)
+    {
       int should_free = 0;
-      if (!kissat_importUnitClauses(solver)) return 20;
-      if (!kissat_importClauses(solver)) return 20;
+      if (!kissat_importUnitClauses(solver))
+        return 20;
+      if (!kissat_importClauses(solver))
+        return 20;
       if (solver->dps == 1)
         solver->cbk_free_clauses(solver->issuer);
     }
