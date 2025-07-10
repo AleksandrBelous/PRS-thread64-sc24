@@ -17,16 +17,22 @@ class sharer;
 extern std::atomic<int> terminated;
 extern std::mutex mtx;
 
-enum Solver_Type {KISSAT};
+enum Solver_Type
+{
+	KISSAT
+};
 
-struct thread_inf {
+struct thread_inf
+{
 	int id, inf;
-	bool operator < ( const thread_inf &other ) const {
+	bool operator<(const thread_inf &other) const
+	{
 		return inf > other.inf;
 	}
 };
 
-struct light {
+struct light
+{
 public:
 	light();
 	~light();
@@ -38,32 +44,35 @@ public:
 	vec<basesolver *> workers;
 	vec<sharer *> sharers;
 
-	vec<char*> *configure_name;
+	vec<char *> *configure_name;
 	vec<double> *configure_val;
 
 	int finalResult;
 	int winner_period, winner_id;
 	mutable boost::mutex winner_mtx;
 	int maxtime;
-	void update_winner(int id, int period) {
+	void update_winner(int id, int period)
+	{
 		boost::mutex::scoped_lock lock(winner_mtx);
-		if (period < winner_period || (period == winner_period && id < winner_id)) {
+		if (period < winner_period || (period == winner_period && id < winner_id))
+		{
 			winner_period = period;
 			winner_id = id;
 		}
 	}
-	int  get_winner_period() {
+	int get_winner_period()
+	{
 		boost::mutex::scoped_lock lock(winner_mtx);
 		return winner_period;
 	}
 	void arg_parse(int argc, char **argv);
-	void configure_from_file(const char* file);
+	void configure_from_file(const char *file);
 	void init_workers();
 	void diversity_workers();
 	void parse_input();
-	int  run();
+	int run();
 	void share();
-	int  solve();
+	int solve();
 	void terminate_workers();
 	void print_model();
 };
