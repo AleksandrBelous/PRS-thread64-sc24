@@ -12,13 +12,16 @@ COPY / /PRS
 
 WORKDIR /PRS/solvers/kissat-inc
 RUN make clean
-RUN ./configure
-RUN make -j
+RUN ./configure && make -j
 
 WORKDIR /PRS/preprocess/m4ri-20140914
 RUN make clean
-RUN ./configure
-RUN make -j
+RUN ARCH="$(uname -m)" && \
+    if echo "$ARCH" | grep -qE "x86|amd64"; then \
+        ./configure && make -j; \
+    else \
+        ./configure --disable-sse2 && make -j; \
+    fi
 
 WORKDIR /PRS
 RUN make clean
