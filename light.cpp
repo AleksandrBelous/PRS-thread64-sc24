@@ -7,7 +7,12 @@
 light::light() : finalResult(0),
                  winner_period(1e9),
                  winner_id(-1),
-                 maxtime(5000)
+                 maxtime(5000),
+                 filename(nullptr),
+                 opt(nullptr),
+                 pre(nullptr),
+                 configure_name(nullptr),
+                 configure_val(nullptr)
 {
     opt = new paras();
     opt->init_paras();
@@ -18,6 +23,27 @@ light::~light()
     for (int i = 0; i < workers.size(); i++)
         delete (workers[i]);
     workers.clear(true);
+
+    if (configure_name)
+    {
+        for (int i = 0; i < OPT(nThreads); i++)
+        {
+            for (int j = 0; j < configure_name[i].size(); j++)
+                delete[] configure_name[i][j];
+            configure_name[i].clear(true);
+        }
+        delete[] configure_name;
+    }
+
+    if (configure_val)
+    {
+        for (int i = 0; i < OPT(nThreads); i++)
+            configure_val[i].clear(true);
+        delete[] configure_val;
+    }
+
+    delete opt;
+    delete pre;
 }
 
 void light::configure_from_file(const char *file)
