@@ -1,4 +1,5 @@
 #include <cassert>
+#include <cstdlib>
 #include "bitset.hpp"
 
 std::random_device rd;
@@ -33,7 +34,7 @@ void Bitset::hash() noexcept{
 }
 
 void Bitset::free() noexcept{
-    delete []array;
+    std::free(array);
 }
 
 void Bitset::eqs(const Bitset& u, int s) noexcept{
