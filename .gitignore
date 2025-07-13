@@ -1,4 +1,19 @@
 build
 .vscode
-*.o
-PRS
+PRS*
+
+# ── Autotools / Libtool ─────────────────────────────────────────
+.libs/
+.deps/
+*.lo          # Libtool object
+*.la          # Libtool archive (text)
+*.lai         # Libtool install-info
+*.a           # Static libraries
+*.so          # Shared libraries
+*.o           # Object files
+*.Plo         # Libtool dependency files
+
+# configure-скрипт и его выводы
+config.status
+config.log
+libtool
