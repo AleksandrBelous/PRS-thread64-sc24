@@ -13,3 +13,15 @@ PRS*
 *.a
 *.so
 *.Plo
+
+# Generated dirs
+**/.libs/
+**/.deps/
+
+# configure output
+**/config.status
+**/config.log
+**/libtool
+
+# Сгенерённые «config.h»-подобные
+**/*_config.h
