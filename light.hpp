@@ -74,7 +74,6 @@ public:
 	void share();
 	int solve();
 	void terminate_workers();
-	void print_model();
 };
 
 #endif
