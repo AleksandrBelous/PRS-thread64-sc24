@@ -237,7 +237,7 @@ bool preprocess::_simulate(Bitset** result, int bit_size) {
             delete result[i];
             result[i] = nullptr;
         }
-    delete fanouts;
+    delete[] fanouts;
     return res;
 }
 
@@ -296,7 +296,10 @@ bool preprocess::do_epcec() {
             }
             int res = _simulate(result, bit_size);
             extra_values++;
-            if (!res) return 0;
+            if (!res) {
+                delete[] result;
+                return 0;
+            }
         }
     } else {
         for(int i=0; i<ni; i++) {
@@ -333,8 +336,11 @@ bool preprocess::do_epcec() {
                 }
             }
         }
-        return _simulate(result, bit_size);
-    } 
+        int res = _simulate(result, bit_size);
+        delete[] result;
+        return res;
+    }
+    delete[] result;
     return 1;
 }
 
