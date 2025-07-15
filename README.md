@@ -35,3 +35,16 @@ clause_sharing: whether use clause sharing (1: enable; 0: disable)
 
 preprocessor: whether use preprocessing (1: enable; 0: disable)
 profile: level of Kissat profiling output (0-4)
+
+### Benchmarking solver
+
+Для запуска серии измерений по папке с десятью CNF-файлами можно использовать
+скрипт `benchmark_solver.py`:
+
+```bash
+python3 benchmark_solver.py ./PRS ./cnfs_nossum_md5_preimage_26r
+```
+
+В каталоге `benchmarks` будет создан отчёт со средним временем решения и
+усреднёнными значениями `self seconds` для пяти наиболее затратных функций по
+данным `gprof`.
