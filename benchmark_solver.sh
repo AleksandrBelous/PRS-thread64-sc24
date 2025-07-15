@@ -14,8 +14,10 @@ CNF_FOLDER="$2"
 BENCH_DIR="benchmarks"
 mkdir -p "$BENCH_DIR"
 
-# Удаляем предыдущие данные gprof, если они есть
-rm -f gmon.out gmon.sum
+# Префикс для файлов профилирования
+PROFILE_PREFIX="$BENCH_DIR/gmon"
+# Очищаем старые данные профилирования
+rm -f "$PROFILE_PREFIX".[0-9]* "$BENCH_DIR"/gmon.sum
 
 total_time=0
 count=0
@@ -25,7 +27,7 @@ for cnf_file in "$CNF_FOLDER"/*.cnf; do
     echo " [*] Solving: $cnf_file"
     start=$(date +%s.%N)
 
-    "$SOLVER" "$cnf_file" --nThreads="$N_THREADS" > /dev/null
+    GMON_OUT_PREFIX="$PROFILE_PREFIX" "$SOLVER" "$cnf_file" --nThreads="$N_THREADS" > /dev/null
 
     end=$(date +%s.%N)
 
@@ -41,11 +43,6 @@ for cnf_file in "$CNF_FOLDER"/*.cnf; do
     echo " [+] Elapsed $elapsed sec"
     count=$((count + 1))
 
-    # Агрегируем данные профилирования
-    if [ -f gmon.out ]; then
-      gprof -s "$SOLVER" gmon.out
-      rm gmon.out
-    fi
   fi
 done
 
@@ -59,14 +56,19 @@ printf "\n Average solving time for %d CNFs: %.3f seconds\n" "$count" "$average"
 
 report_file="$BENCH_DIR/benchmark_$(date +%Y%m%d_%H%M%S).txt"
 
-if [ -f gmon.sum ]; then
+# Сводим профили из всех полученных файлов
+if ls "$PROFILE_PREFIX".* 1>/dev/null 2>&1; then
+  gprof -s "$SOLVER" "$PROFILE_PREFIX".*
+  mv gmon.sum "$BENCH_DIR/gmon.sum"
+  rm "$PROFILE_PREFIX".[0-9]*
+
   {
     printf "Average solving time for %d CNFs: %.3f seconds\n\n" "$count" "$average"
-    echo "Top 5 functions:" 
-    gprof "$SOLVER" gmon.sum | awk 'BEGIN{head=0;count=0} /^Flat profile/ {head=1;print;getline;getline;print;next} head && count<5 {print;count++}'
+    echo "Top 5 functions:"
+    gprof "$SOLVER" "$BENCH_DIR/gmon.sum" | awk 'BEGIN{head=0;count=0} /^Flat profile/ {head=1;print;getline;getline;print;next} head && count<5 {print;count++}'
   } > "$report_file"
   echo " [*] Profile saved to $report_file"
-  rm gmon.sum
+  rm "$BENCH_DIR/gmon.sum"
 else
   echo " [!] gprof data not found"
 fi
