@@ -34,3 +34,4 @@ cutoff: the wall time for SAT solving
 clause_sharing: whether use clause sharing (1: enable; 0: disable) 
 
 preprocessor: whether use preprocessing (1: enable; 0: disable)
+profile: level of Kissat profiling output (0-4)

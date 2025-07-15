@@ -19,7 +19,8 @@
     PARA( shuffle    , int    , 1     , 0  , 1   , "Use random shuffle") \
     PARA( preprocessor   , int    , 1     , 0  , 1   , "Use Simplify (only preprocess)") \
     PARA( nThreads    , int    , 64    , 1  , 128 , "Thread number") \
-    PARA( cutoff      , double , 5000  , 0  , 1e8 , "Cutoff time") 
+    PARA( cutoff      , double , 5000  , 0  , 1e8 , "Cutoff time") \
+    PARA( profile     , int    , 0     , 0  , 4   , "Kissat profile level")
     
 #define STR_PARAS \
     STR_PARA( config_filename     , "" ,  "Config file") 
