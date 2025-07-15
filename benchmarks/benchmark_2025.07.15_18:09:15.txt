@@ -1,8 +1,0 @@
-Average solving time for 10 CNFs: 2.647 seconds
-
-Top 5 functions:
-1.194000 kissat_search_propagate
-0.160000 kissat_substitute
-0.154000 walking_phase
-0.146000 kissat_probing_propagate
-0.123333 kissat_init_limits

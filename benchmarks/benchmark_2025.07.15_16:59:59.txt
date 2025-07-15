@@ -1,3 +1,0 @@
-Average solving time for 10 CNFs: 2.663 seconds
-
-Top 5 functions:
