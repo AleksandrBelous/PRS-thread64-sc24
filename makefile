@@ -10,7 +10,7 @@ LIBS = -lkissat -Lsolvers/kissat-inc/build \
 
 CXXFLAGS = -Isolvers/kissat-inc \
 		   -Ipreprocess/m4ri-20140914 \
-		   -std=c++17 -O3
+		   -std=c++17 -O3 -pg -g
 
 $(EXEC): $(OBJS)
 	$(CXX) -o $@ $^ $(CXXFLAGS) $(LIBS)
