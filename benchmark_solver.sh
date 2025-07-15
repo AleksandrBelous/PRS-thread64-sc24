@@ -67,7 +67,7 @@ fi
 average=$(awk "BEGIN {print $total_time / $count}")
 printf "\n Average solving time for %d CNFs: %.3f seconds\n" "$count" "$average"
 
-report_file="$BENCH_DIR/benchmark_$(date +%Y%m%d_%H%M%S).txt"
+report_file="$BENCH_DIR/benchmark_$(date +%Y.%m.%d_%H:%M:%S).txt"
 
 # Формируем итоговый отчёт
 if [ -f "$BENCH_DIR/gmon.sum" ]; then
