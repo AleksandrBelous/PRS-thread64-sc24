@@ -1,10 +1,25 @@
 import argparse
 import os
+import re
 import subprocess
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
+
+
+@dataclass
+class GprofEntry:
+    """Single line of gprof flat profile."""
+
+    pct_time: float
+    cumulative: float
+    self_sec: float
+    calls: Optional[float]
+    self_per_call: Optional[float]
+    total_per_call: Optional[float]
+    name: str
 
 
 def run_solver(solver: str, cnf: str, n_threads: int) -> float:
@@ -18,8 +33,10 @@ def run_solver(solver: str, cnf: str, n_threads: int) -> float:
     return elapsed
 
 
-def collect_gprof(solver: str, gmon_file: str = "gmon.out") -> Dict[str, float]:
-    """Return mapping from function name to self seconds using gprof | head."""
+def collect_gprof(
+    solver: str, gmon_file: str = "gmon.out", limit: int = 5
+) -> Tuple[float, List[GprofEntry]]:
+    """Возвращает top функций из вывода `gprof | head`."""
     try:
         result = subprocess.run(
             ["bash", "-c", f"gprof {solver} {gmon_file} | head"],
@@ -28,37 +45,72 @@ def collect_gprof(solver: str, gmon_file: str = "gmon.out") -> Dict[str, float]:
         )
     except FileNotFoundError:
         print("[!] gprof not found")
-        return {}
+        return 0.0, []
 
     if result.returncode != 0:
-        return {}
+        return 0.0, []
 
     lines = result.stdout.splitlines()
-    profile: Dict[str, float] = {}
+    sample_unit = 0.0
+    entries: List[GprofEntry] = []
     capture = False
     for line in lines:
-        if line.strip().endswith("name"):
+        if "Each sample counts" in line:
+            m = re.search(r"Each sample counts as\s+([0-9.]+)\s+seconds", line)
+            if m:
+                sample_unit = float(m.group(1))
+            continue
+        if line.strip().startswith("time") and "name" in line:
             capture = True
             continue
         if not capture:
             continue
         if not line.strip():
-            if profile:
+            if entries:
                 break
             else:
                 continue
         parts = line.split()
-        if len(parts) < 7:
+        if len(parts) < 4:
             continue
+        name = parts[-1]
+        nums = parts[:-1]
         try:
-            self_sec = float(parts[2])
+            pct = float(nums[0])
+            cumulative = float(nums[1])
+            self_sec = float(nums[2])
         except ValueError:
             continue
-        func = parts[-1]
-        profile[func] = self_sec
-        if len(profile) >= 5:
+        calls = self_per_call = total_per_call = None
+        if len(nums) >= 4:
+            try:
+                calls = float(nums[3])
+            except ValueError:
+                calls = None
+        if len(nums) >= 5:
+            try:
+                self_per_call = float(nums[4])
+            except ValueError:
+                self_per_call = None
+        if len(nums) >= 6:
+            try:
+                total_per_call = float(nums[5])
+            except ValueError:
+                total_per_call = None
+        entries.append(
+            GprofEntry(
+                pct_time=pct,
+                cumulative=cumulative,
+                self_sec=self_sec,
+                calls=calls,
+                self_per_call=self_per_call,
+                total_per_call=total_per_call,
+                name=name,
+            )
+        )
+        if limit and len(entries) >= limit:
             break
-    return profile
+    return sample_unit, entries
 
 
 def main():
@@ -80,7 +132,8 @@ def main():
     cnf_files = os.listdir(args.cnf_folder)
     print(f"[*] Найдено файлов: {len(cnf_files)}")
 
-    profiles: List[Dict[str, float]] = []
+    profiles: List[List[GprofEntry]] = []
+    sample_units: List[float] = []
 
     for cnf_file in cnf_files:
         elapsed = run_solver(
@@ -89,8 +142,9 @@ def main():
         total_time += elapsed
         count += 1
         print(f"      [=] Суммарно: {elapsed:.3f} сек")
-        prof = collect_gprof(args.solver)
+        unit, prof = collect_gprof(args.solver)
         if prof:
+            sample_units.append(unit)
             profiles.append(prof)
 
     if count == 0:
@@ -102,18 +156,97 @@ def main():
     report = [f"Average solving time for {count} CNFs: {average_time:.3f} seconds"]
 
     if profiles:
-        agg: Dict[str, float] = {}
-        cnt: Dict[str, int] = {}
+        agg: Dict[str, Dict[str, float]] = {}
         for prof in profiles:
-            for func, val in prof.items():
-                agg[func] = agg.get(func, 0.0) + val
-                cnt[func] = cnt.get(func, 0) + 1
-        avg_prof = {func: agg[func] / cnt[func] for func in agg}
-        top_funcs = sorted(avg_prof.items(), key=lambda x: x[1], reverse=True)[:5]
+            for entry in prof:
+                info = agg.setdefault(
+                    entry.name,
+                    {
+                        "pct_sum": 0.0,
+                        "self_sum": 0.0,
+                        "calls_sum": 0.0,
+                        "total_sum": 0.0,
+                        "count": 0,
+                        "has_calls": False,
+                        "has_total": False,
+                    },
+                )
+                info["pct_sum"] += entry.pct_time
+                info["self_sum"] += entry.self_sec
+                info["count"] += 1
+                if entry.calls is not None:
+                    info["calls_sum"] += entry.calls
+                    info["has_calls"] = True
+                if (
+                    entry.total_per_call is not None
+                    and entry.calls is not None
+                ):
+                    info["total_sum"] += entry.total_per_call * entry.calls
+                    info["has_total"] = True
+
+        avg_entries: List[GprofEntry] = []
+        for name, info in agg.items():
+            cnt_runs = info["count"]
+            avg_self = info["self_sum"] / cnt_runs
+            avg_pct = info["pct_sum"] / cnt_runs
+            avg_calls = (
+                info["calls_sum"] / cnt_runs if info["has_calls"] else None
+            )
+            avg_total_sec = (
+                info["total_sum"] / cnt_runs if info["has_total"] else None
+            )
+            if avg_calls and avg_calls != 0:
+                avg_self_call = avg_self / avg_calls
+                avg_total_call = (
+                    avg_total_sec / avg_calls if avg_total_sec is not None else None
+                )
+            else:
+                avg_self_call = None
+                avg_total_call = None
+            avg_entries.append(
+                GprofEntry(
+                    pct_time=avg_pct,
+                    cumulative=0.0,  # will be filled later
+                    self_sec=avg_self,
+                    calls=avg_calls,
+                    self_per_call=avg_self_call,
+                    total_per_call=avg_total_call,
+                    name=name,
+                )
+            )
+
+        avg_entries.sort(key=lambda e: e.self_sec, reverse=True)
+
+        sample_unit = sum(sample_units) / len(sample_units) if sample_units else 0.0
         report.append("")
-        report.append("Top 5 functions:")
-        for func, val in top_funcs:
-            report.append(f"{val:.6f} {func}")
+        report.append(f"Each sample counts as {sample_unit:.2f} seconds.")
+        report.append(
+            "  %   cumulative   self              self     total           "
+        )
+        report.append(
+            " time   seconds   seconds    calls   s/call   s/call  name    "
+        )
+
+        cumulative = 0.0
+        for entry in avg_entries[:5]:
+            cumulative += entry.self_sec
+            calls_str = (
+                f"{int(entry.calls):d}" if entry.calls is not None else ""
+            )
+            self_call_str = (
+                f"{entry.self_per_call:.2f}" if entry.self_per_call is not None else ""
+            )
+            total_call_str = (
+                f"{entry.total_per_call:.2f}"
+                if entry.total_per_call is not None
+                else ""
+            )
+            line = (
+                f"{entry.pct_time:6.2f} {cumulative:10.2f} "
+                f"{entry.self_sec:9.2f} "
+                f"{calls_str:>9} {self_call_str:>8} {total_call_str:>8}  {entry.name}"
+            )
+            report.append(line)
 
     timestamp = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
     report_file = bench_dir / f"benchmark_{timestamp}.txt"
