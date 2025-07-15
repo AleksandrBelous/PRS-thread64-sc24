@@ -54,7 +54,7 @@ fi
 average=$(awk "BEGIN {print $total_time / $count}")
 printf "\n Average solving time for %d CNFs: %.3f seconds\n" "$count" "$average"
 
-report_file="$BENCH_DIR/benchmark_$(date +%Y%m%d_%H%M%S).txt"
+report_file="$BENCH_DIR/benchmark_$(date +%Y.%m.%d_%H:%M:%S).txt"
 
 # Сводим профили из всех полученных файлов
 if ls "$PROFILE_PREFIX".* 1>/dev/null 2>&1; then
