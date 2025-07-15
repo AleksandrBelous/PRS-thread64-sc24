@@ -17,7 +17,7 @@ mkdir -p "$BENCH_DIR"
 # Префикс для файлов профилирования
 PROFILE_PREFIX="$BENCH_DIR/gmon"
 # Очищаем старые данные профилирования
-rm -f "$PROFILE_PREFIX".[0-9]* "$BENCH_DIR"/gmon.sum
+rm -f "$PROFILE_PREFIX".* "$BENCH_DIR"/gmon.sum
 
 total_time=0
 count=0
@@ -43,10 +43,10 @@ for cnf_file in "$CNF_FOLDER"/*.cnf; do
     echo " [+] Elapsed $elapsed sec"
     count=$((count + 1))
 
-
     # Объединяем профили текущего запуска
     for gmon_file in "$PROFILE_PREFIX".*; do
       [ -f "$gmon_file" ] || continue
+      echo " [DEBUG] merge $gmon_file" >&2
       if [ -f "$BENCH_DIR/gmon.sum" ]; then
         gprof -s "$SOLVER" "$BENCH_DIR/gmon.sum" "$gmon_file"
       else
