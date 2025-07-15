@@ -33,14 +33,14 @@ def main():
     count = 0
 
     print(f"[*] Поиск CNF-файлов в {args.cnf_folder}")
-    cnf_files = sorted(Path(args.cnf_folder).glob("*.cnf"))
+    cnf_files = [Path(args.cnf_folder).glob("*.cnf")]
     print(f"[*] Найдено файлов: {len(cnf_files)}")
 
     for cnf_file in cnf_files:
         elapsed = run_solver(args.solver, str(cnf_file), args.threads)
         total_time += elapsed
         count += 1
-        print(f"      [=] Суммарно: {total_time:.3f} сек")
+        print(f"      [=] Суммарно: {elapsed:.3f} сек")
 
     if count == 0:
         print(f"[!] No .cnf files found in {args.cnf_folder}")
