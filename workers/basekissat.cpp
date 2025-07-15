@@ -102,6 +102,7 @@ basekissat::basekissat(int id, light* light) : basesolver(id, light) {
 }
 
 basekissat::~basekissat(){
+    // выводит статистику Kissat, включая раздел профилирования
     kissat_print_statistics(solver);
     kissat_release(solver);
 }
