@@ -59,12 +59,18 @@ static clause *
 search_propagate (kissat * solver)
 {
   clause *res = 0;
-  while (!res && solver->propagated < SIZE_STACK (solver->trail))
+  unsigned propagated = solver->propagated;
+  unsigned *trail = BEGIN_STACK (solver->trail);
+  const unsigned size = SIZE_STACK (solver->trail);
+
+  while (!res && propagated < size)
     {
-      const unsigned lit = PEEK_STACK (solver->trail, solver->propagated);
+      const unsigned lit = trail[propagated];
       res = search_propagate_literal (solver, lit);
-      solver->propagated++;
+      propagated++;
     }
+
+  solver->propagated = propagated;
   return res;
 }
 
