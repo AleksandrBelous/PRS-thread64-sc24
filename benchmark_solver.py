@@ -1,50 +1,20 @@
 import argparse
-import glob
 import os
 import subprocess
 import time
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
 
-def parse_gprof_output(gprof_output):
-    lines = gprof_output.splitlines()
-    print(f"    > in parse_gprof_output: {lines}")
-    start = None
-    for idx, line in enumerate(lines):
-        if line.strip().startswith("%") and "time" in line and "cumulative" in line:
-            start = idx + 1
-            break
-    if start is None:
-        return []
-    entries = []
-    for line in lines[start:]:
-        if not line.strip():
-            break
-        parts = line.split()
-        if len(parts) < 7:
-            continue
-        try:
-            self_sec = float(parts[2])
-        except ValueError:
-            continue
-        func_name = parts[-1]
-        entries.append((func_name, self_sec))
-        if len(entries) >= 5:
-            break
-    return entries
-
-
-def run_solver(solver, cnf, prefix, n_threads):
-    env = os.environ.copy()
-    env["GMON_OUT_PREFIX"] = str(prefix)
+def run_solver(solver: str, cnf: str, n_threads: int) -> float:
+    """Run solver on a single CNF file and return elapsed time."""
+    print(f"  [*] Запуск решения {cnf}")
     start = time.perf_counter()
-    subprocess.run(
-        [solver, cnf, f"--nThreads={n_threads}"], env=env, stdout=subprocess.DEVNULL
-    )
+    subprocess.run([solver, cnf, f"--nThreads={n_threads}"], stdout=subprocess.DEVNULL)
     end = time.perf_counter()
-    return end - start
+    elapsed = end - start
+    print(f"      [+] Время: {elapsed:.3f} сек")
+    return elapsed
 
 
 def main():
@@ -58,53 +28,32 @@ def main():
 
     bench_dir = Path("benchmarks")
     bench_dir.mkdir(exist_ok=True)
-    prefix = bench_dir / "gmon"
-
-    for f in glob.glob(f"{prefix}.*"):
-        os.remove(f)
 
     total_time = 0.0
     count = 0
-    func_sum = defaultdict(float)
-    func_count = defaultdict(int)
 
+    print(f"[*] Поиск CNF-файлов в {args.cnf_folder}")
     cnf_files = sorted(Path(args.cnf_folder).glob("*.cnf"))
+    print(f"[*] Найдено файлов: {len(cnf_files)}")
+
     for cnf_file in cnf_files:
-        elapsed = run_solver(args.solver, str(cnf_file), prefix, args.threads)
+        elapsed = run_solver(args.solver, str(cnf_file), args.threads)
         total_time += elapsed
         count += 1
-
-        for gmon_file in glob.glob(f"{prefix}.*"):
-            result = subprocess.run(
-                ["gprof", args.solver, gmon_file, "|", "head"],
-                capture_output=True,
-                text=True,
-            )
-            entries = parse_gprof_output(result.stdout)
-            for func, self_time in entries:
-                func_sum[func] += self_time
-                func_count[func] += 1
-            os.remove(gmon_file)
+        print(f"      [=] Суммарно: {total_time:.3f} сек")
 
     if count == 0:
         print(f"[!] No .cnf files found in {args.cnf_folder}")
         return
 
     average_time = total_time / count
-    report = [
-        f"Average solving time for {count} CNFs: {average_time:.3f} seconds",
-        "",
-        "Top 5 functions:",
-    ]
-
-    averages = [(func_sum[f] / func_count[f], f) for f in func_sum]
-    for avg, name in sorted(averages, reverse=True)[:5]:
-        report.append(f"{avg:.6f} {name}")
+    print(f"[*] Среднее время: {average_time:.3f} сек")
+    report = [f"Average solving time for {count} CNFs: {average_time:.3f} seconds"]
 
     timestamp = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
     report_file = bench_dir / f"benchmark_{timestamp}.txt"
     report_file.write_text("\n".join(report))
-    print(f"[*] Profile saved to {report_file}")
+    print(f"[*] Отчёт сохранён в {report_file}")
 
 
 if __name__ == "__main__":
