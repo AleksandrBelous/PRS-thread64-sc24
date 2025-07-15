@@ -43,6 +43,7 @@ for cnf_file in "$CNF_FOLDER"/*.cnf; do
     echo " [+] Elapsed $elapsed sec"
     count=$((count + 1))
 
+
     # Объединяем профили текущего запуска
     for gmon_file in "$PROFILE_PREFIX".*; do
       [ -f "$gmon_file" ] || continue
