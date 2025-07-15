@@ -86,6 +86,7 @@ int call_back_in(void *solver, int *lbd, cvec *c) {
 
 basekissat::basekissat(int id, light* light) : basesolver(id, light) {
     solver = kissat_init();
+    kissat_set_option(solver, "profile", controller->opt->profile);
     solver -> issuer = this;
     solver -> cbkImportClause = NULL;
     solver -> cbkExportClause = NULL;
