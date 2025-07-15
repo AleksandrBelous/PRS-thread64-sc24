@@ -1,7 +1,7 @@
 ARCH="$(uname -m)"
 
 cd solvers/kissat-inc
-./configure && make -j
+./configure --profile && make -j
 cd ../..
 
 cd preprocess/m4ri-20140914
