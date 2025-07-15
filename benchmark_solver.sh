@@ -19,7 +19,7 @@ PROFILE_PREFIX="$BENCH_DIR/gmon"
 # Временный файл для хранения промежуточных данных о функциях
 TMP_FUNCS="$BENCH_DIR/tmp_profile.txt"
 # Очищаем старые данные профилирования
-rm -f "$PROFILE_PREFIX".* "$BENCH_DIR"/gmon.sum "$TMP_FUNCS"
+rm -f "$PROFILE_PREFIX".* "$BENCH_DIR" "$TMP_FUNCS"
 
 total_time=0
 count=0
