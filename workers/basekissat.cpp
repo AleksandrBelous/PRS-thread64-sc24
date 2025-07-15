@@ -101,7 +101,8 @@ basekissat::basekissat(int id, light* light) : basesolver(id, light) {
 }
 
 basekissat::~basekissat(){
-    delete solver;
+    kissat_print_statistics(solver);
+    kissat_release(solver);
 }
 
 void basekissat::parse_from_CNF(char* filename) {
