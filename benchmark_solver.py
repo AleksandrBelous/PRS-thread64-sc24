@@ -1,4 +1,5 @@
 import argparse
+from ast import arg
 import os
 import re
 import subprocess
@@ -122,7 +123,7 @@ def main():
     )
     args = parser.parse_args()
 
-    bench_dir = Path("benchmarks")
+    bench_dir = Path(f"benchmarks_{args.cnf_folder.split('_')[-1]}")
     bench_dir.mkdir(exist_ok=True)
 
     total_time = 0.0
@@ -177,10 +178,7 @@ def main():
                 if entry.calls is not None:
                     info["calls_sum"] += entry.calls
                     info["has_calls"] = True
-                if (
-                    entry.total_per_call is not None
-                    and entry.calls is not None
-                ):
+                if entry.total_per_call is not None and entry.calls is not None:
                     info["total_sum"] += entry.total_per_call * entry.calls
                     info["has_total"] = True
 
@@ -189,12 +187,8 @@ def main():
             cnt_runs = info["count"]
             avg_self = info["self_sum"] / cnt_runs
             avg_pct = info["pct_sum"] / cnt_runs
-            avg_calls = (
-                info["calls_sum"] / cnt_runs if info["has_calls"] else None
-            )
-            avg_total_sec = (
-                info["total_sum"] / cnt_runs if info["has_total"] else None
-            )
+            avg_calls = info["calls_sum"] / cnt_runs if info["has_calls"] else None
+            avg_total_sec = info["total_sum"] / cnt_runs if info["has_total"] else None
             if avg_calls and avg_calls != 0:
                 avg_self_call = avg_self / avg_calls
                 avg_total_call = (
@@ -220,19 +214,13 @@ def main():
         sample_unit = sum(sample_units) / len(sample_units) if sample_units else 0.0
         report.append("")
         report.append(f"Each sample counts as {sample_unit:.2f} seconds.")
-        report.append(
-            "  %   cumulative   self              self     total           "
-        )
-        report.append(
-            " time   seconds   seconds    calls   s/call   s/call  name    "
-        )
+        report.append("  %   cumulative   self              self     total           ")
+        report.append(" time   seconds   seconds    calls   s/call   s/call  name    ")
 
         cumulative = 0.0
         for entry in avg_entries[:5]:
             cumulative += entry.self_sec
-            calls_str = (
-                f"{int(entry.calls):d}" if entry.calls is not None else ""
-            )
+            calls_str = f"{int(entry.calls):d}" if entry.calls is not None else ""
             self_call_str = (
                 f"{entry.self_per_call:.2f}" if entry.self_per_call is not None else ""
             )
@@ -249,7 +237,9 @@ def main():
             report.append(line)
 
     timestamp = datetime.now().strftime("%Y.%m.%d_%H:%M:%S")
-    report_file = bench_dir / f"benchmark_{timestamp}.txt"
+    report_file = (
+        bench_dir / f"benchmark_{str(bench_dir).split('_')[-1]}_{timestamp}.txt"
+    )
     report_file.write_text("\n".join(report))
     print(f"[*] Отчёт сохранён в {report_file}")
 

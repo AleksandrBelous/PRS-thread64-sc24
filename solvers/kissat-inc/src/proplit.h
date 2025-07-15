@@ -91,51 +91,34 @@ PROPAGATE_LITERAL (kissat * solver,
 
   while (p != end_watches)
     {
-      const watch head = *p;
+      const watch head = *q++ = *p++;
       const unsigned blocking = head.blocking.lit;
       assert (VALID_INTERNAL_LITERAL (blocking));
       const value blocking_value = values[blocking];
       if (head.type.binary)
-        {
-          p++;
-          if (blocking_value > 0)
-            {
-              if (q != p - 1)
-                *q = head;
-              q++;
-              continue;
-            }
-          const bool redundant = head.binary.redundant;
-          if (blocking_value < 0)
-            {
-              res = kissat_binary_conflict (solver, redundant,
-                                            not_lit, blocking);
-              break;
-            }
-          else
-            {
-              assert (!blocking_value);
-              kissat_assign_binary (solver, values, assigned,
-                                    redundant, blocking, not_lit);
-              if (q != p - 1)
-                q[-1] = head;
-            }
-        }
+	{
+	  if (blocking_value > 0)
+	    continue;
+	  const bool redundant = head.binary.redundant;
+	  if (blocking_value < 0)
+	    {
+	      res = kissat_binary_conflict (solver, redundant,
+					    not_lit, blocking);
+	      break;
+	    }
+	  else
+	    {
+	      assert (!blocking_value);
+	      kissat_assign_binary (solver, values, assigned,
+				    redundant, blocking, not_lit);
+	    }
+	}
       else
-        {
-          const watch tail = p[1];
-          p += 2;
-          if (blocking_value > 0)
-            {
-              if (q != p - 2)
-                {
-                  q[0] = head;
-                  q[1] = tail;
-                }
-              q += 2;
-              continue;
-            }
-          const reference ref = tail.raw;
+	{
+	  const watch tail = *q++ = *p++;
+	  if (blocking_value > 0)
+	    continue;
+	  const reference ref = tail.raw;
 	  assert (ref < SIZE_STACK (solver->arena));
 	  clause *c = (clause *) (arena + ref);
 #if defined(HYPER_PROPAGATION) || defined(PROBING_PROPAGATION)
