@@ -160,6 +160,7 @@ struct kissat
 
   unsigneds trail;
   unsigned propagated;
+  unsigned chb_index;
 
   unsigned best_assigned;
   unsigned consistently_assigned;

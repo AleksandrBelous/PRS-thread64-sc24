@@ -143,6 +143,8 @@ kissat_backtrack (kissat * solver, unsigned new_level)
     }
   RESIZE_STACK (solver->trail, j);
 
+  solver->chb_index = SIZE_STACK (solver->trail);
+
   solver->level = new_level;
   LOG ("unassigned %u literals", unassigned);
   LOG ("reassigned %u literals", reassigned);

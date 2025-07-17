@@ -90,15 +90,20 @@ kissat_search_propagate (kissat * solver)
   STOP (propagate);
 
   // CHB
-  if(solver->stable && solver->heuristic==1){
-      int i = SIZE_STACK (solver->trail) - 1;
-      unsigned lit = i>=0?PEEK_STACK (solver->trail, i):0;  
-      while(i>=0 && LEVEL(lit)==solver->level){
-	    lit = PEEK_STACK (solver->trail, i);
-            kissat_bump_chb(solver,IDX(lit), conflict? 1.0 : 0.9); 
-	    i--;	    
-      }
-  }  
+  if (solver->stable && solver->heuristic == 1)
+    {
+      int end = SIZE_STACK (solver->trail);
+      int i = end - 1;
+      while (i >= 0 && i >= (int) solver->chb_index)
+        {
+          unsigned lit = PEEK_STACK (solver->trail, i);
+          if (LEVEL (lit) != solver->level)
+            break;
+          kissat_bump_chb (solver, IDX (lit), conflict ? 1.0 : 0.9);
+          i--;
+        }
+      solver->chb_index = end;
+    }
   if(solver->stable && solver->heuristic==1 && conflict) kissat_decay_chb(solver);
 
   return conflict;

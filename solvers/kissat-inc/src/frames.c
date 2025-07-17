@@ -11,5 +11,6 @@ kissat_push_frame (kissat * solver, unsigned decision)
   frame.trail = trail;
   frame.promote = false;
   frame.used = 0;
+  solver->chb_index = trail;
   PUSH_STACK (solver->frames, frame);
 }
