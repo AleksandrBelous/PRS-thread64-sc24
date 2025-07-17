@@ -60,15 +60,15 @@ static inline void
 kissat_push_large_watch (kissat * solver, watches * watches, reference ref)
 {
   const watch watch = kissat_large_watch (ref);
-  PUSH_WATCHES (*watches, watch);
+  PUSH_LARGE_WATCH (*watches, watch);
 }
 
 static inline void
 kissat_push_binary_watch (kissat * solver, watches * watches,
-			  bool redundant, bool hyper, unsigned other)
+                          bool redundant, bool hyper, unsigned other)
 {
   const watch watch = kissat_binary_watch (other, redundant, hyper);
-  PUSH_WATCHES (*watches, watch);
+  PUSH_BINARY_WATCH (*watches, watch);
 }
 
 static inline void
@@ -77,9 +77,9 @@ kissat_push_blocking_watch (kissat * solver, watches * watches,
 {
   assert (solver->watching);
   const watch head = kissat_blocking_watch (blocking);
-  PUSH_WATCHES (*watches, head);
+  PUSH_LARGE_WATCH (*watches, head);
   const watch tail = kissat_large_watch (ref);
-  PUSH_WATCHES (*watches, tail);
+  PUSH_LARGE_WATCH (*watches, tail);
 }
 
 static inline void

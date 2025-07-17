@@ -78,7 +78,16 @@ union watch
   unsigned raw;
 };
 
-typedef vector watches;
+typedef struct watches watches;
+
+struct watches
+{
+  vector binary_watches;
+  vector large_watches;
+  sector size;
+};
+
+#define WATCHES_SIZE(WS) ((WS).size)
 
 typedef struct litwatch litwatch;
 typedef struct litpair litpair;
@@ -142,32 +151,78 @@ kissat_blocking_watch (unsigned lit)
   return res;
 }
 
-#define PUSH_WATCHES(W,E) \
+#define PUSH_BINARY_WATCH(W,E) \
 do { \
   assert (sizeof (E) == sizeof (unsigned)); \
-  kissat_push_vectors (solver, &solver->vectors, &(W), (E).raw); \
+  kissat_push_vectors (solver, &solver->vectors, &(W).binary_watches, (E).raw); \
+  (W).size++; \
 } while (0)
 
-#define LAST_WATCH_POINTER(WS) \
-  (watch *) kissat_last_vector_pointer (&solver->vectors, &WS)
-
-#define BEGIN_WATCHES(WS) \
-  ((union watch*) kissat_begin_vector (&solver->vectors, &(WS)))
-
-#define END_WATCHES(WS) \
-  ((union watch*) kissat_end_vector (&solver->vectors, &(WS)))
-
-#define RELEASE_WATCHES(WS) \
-  kissat_release_vector (solver, &solver->vectors, &(WS))
-
-#define SET_END_OF_WATCHES(WS,P) \
+#define PUSH_LARGE_WATCH(W,E) \
 do { \
-  sector SIZE = (unsigned*)(P) - kissat_begin_vector (&solver->vectors, &WS); \
-  kissat_resize_vector (solver, &solver->vectors, &WS, SIZE); \
+  assert (sizeof (E) == sizeof (unsigned)); \
+  kissat_push_vectors (solver, &solver->vectors, &(W).large_watches, (E).raw); \
+  (W).size++; \
 } while (0)
 
-#define REMOVE_WATCHES(W,E) \
-  kissat_remove_from_vector (solver, &solver->vectors, &(W), (E).raw)
+#define PUSH_WATCHES(W,E) \
+do { \
+  watch TMP = (E); \
+  if (TMP.type.binary) \
+    PUSH_BINARY_WATCH (W, TMP); \
+  else \
+    PUSH_LARGE_WATCH (W, TMP); \
+} while (0)
+
+#define LAST_BINARY_WATCH_POINTER(WS) \
+  (watch *) kissat_last_vector_pointer (&solver->vectors, &(WS).binary_watches)
+
+#define LAST_LARGE_WATCH_POINTER(WS) \
+  (watch *) kissat_last_vector_pointer (&solver->vectors, &(WS).large_watches)
+
+#define BEGIN_BINARY_WATCHES(WS) \
+  ((union watch*) kissat_begin_vector (&solver->vectors, &(WS).binary_watches))
+
+#define END_BINARY_WATCHES(WS) \
+  ((union watch*) kissat_end_vector (&solver->vectors, &(WS).binary_watches))
+
+#define BEGIN_LARGE_WATCHES(WS) \
+  ((union watch*) kissat_begin_vector (&solver->vectors, &(WS).large_watches))
+
+#define END_LARGE_WATCHES(WS) \
+  ((union watch*) kissat_end_vector (&solver->vectors, &(WS).large_watches))
+
+#define RELEASE_BINARY_WATCHES(WS) \
+  kissat_release_vector (solver, &solver->vectors, &(WS).binary_watches)
+
+#define RELEASE_LARGE_WATCHES(WS) \
+  kissat_release_vector (solver, &solver->vectors, &(WS).large_watches)
+
+#define SET_END_OF_BINARY_WATCHES(WS,P) \
+do { \
+  sector SIZE = (unsigned*)(P) - kissat_begin_vector (&solver->vectors, &(WS).binary_watches); \
+  kissat_resize_vector (solver, &solver->vectors, &(WS).binary_watches, SIZE); \
+  (WS).size = (WS).binary_watches.size + (WS).large_watches.size; \
+} while (0)
+
+#define SET_END_OF_LARGE_WATCHES(WS,P) \
+do { \
+  sector SIZE = (unsigned*)(P) - kissat_begin_vector (&solver->vectors, &(WS).large_watches); \
+  kissat_resize_vector (solver, &solver->vectors, &(WS).large_watches, SIZE); \
+  (WS).size = (WS).binary_watches.size + (WS).large_watches.size; \
+} while (0)
+
+#define REMOVE_BINARY_WATCHES(W,E) \
+do { \
+  kissat_remove_from_vector (solver, &solver->vectors, &(W).binary_watches, (E).raw); \
+  (W).size--; \
+} while (0)
+
+#define REMOVE_LARGE_WATCHES(W,E) \
+do { \
+  kissat_remove_from_vector (solver, &solver->vectors, &(W).large_watches, (E).raw); \
+  (W).size--; \
+} while (0)
 
 #define WATCHES(LIT) (solver->watches[assert ((LIT) < LITS), (LIT)])
 
