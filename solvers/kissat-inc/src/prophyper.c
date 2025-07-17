@@ -71,8 +71,8 @@ binary_propagate_literal (kissat * solver, unsigned lit)
   const unsigned not_lit = NOT (lit);
 
   watches *watches = &WATCHES (not_lit);
-  value *values = solver->values;
-  assigned *assigned = solver->assigned;
+  value *__restrict values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
 
   const watch *begin = BEGIN_WATCHES (*watches);
   const watch *end = END_WATCHES (*watches);

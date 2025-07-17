@@ -189,7 +189,7 @@ import_decision_phases (walker * walker)
   const value initial_phase = INITIAL_PHASE;
   const flags *flags = solver->flags;
   const bool stable = solver->stable;
-  value *values = solver->values;
+  value *__restrict values = solver->values;
   for (all_variables (idx))
     {
       if (!flags[idx].active)
@@ -216,7 +216,7 @@ static unsigned
 connect_binary_counters (walker * walker)
 {
   kissat *solver = walker->solver;
-  value *values = solver->values;
+  value *__restrict values = solver->values;
   tagged *refs = walker->refs;
   watches *all_watches = solver->watches;
   counter *counters = walker->counters;
@@ -267,7 +267,7 @@ connect_large_counters (walker * walker, unsigned counter_ref)
   kissat *solver = walker->solver;
   assert (!solver->level);
   const value *saved = walker->saved;
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   const word *arena = BEGIN_STACK (solver->arena);
   counter *counters = walker->counters;
   tagged *refs = walker->refs;
@@ -472,7 +472,7 @@ pick_literal (kissat * solver, walker * walker)
 
   assert (EMPTY_STACK (walker->scores));
 
-  value *values = solver->values;
+  value *__restrict values = solver->values;
 
   double sum = 0;
   unsigned picked_lit = INVALID_LIT;
@@ -613,7 +613,7 @@ save_all_values (kissat * solver, walker * walker)
   assert (EMPTY_STACK (walker->trail));
   assert (walker->best == INVALID_BEST);
   LOG ("copying all values as saved phases since trail is invalid");
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   phase *phases = solver->phases;
   for (all_variables (idx))
     {
@@ -640,7 +640,7 @@ save_walker_trail (kissat * solver, walker * walker, bool keep)
 #endif
   unsigned *begin = BEGIN_STACK (walker->trail);
   const unsigned *best = begin + walker->best;
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   phase *phases = solver->phases;
   for (const unsigned *p = begin; p != best; p++)
     {
@@ -719,7 +719,7 @@ static void
 flip_literal (kissat * solver, walker * walker, unsigned flip)
 {
   LOG ("flipping literal %s", LOGLIT (flip));
-  value *values = solver->values;
+  value *__restrict values = solver->values;
   const value value = values[flip];
   assert (value < 0);
   values[flip] = -value;

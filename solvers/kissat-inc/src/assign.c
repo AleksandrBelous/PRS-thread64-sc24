@@ -15,8 +15,8 @@ kissat_assign (kissat * solver,
   assert (binary || !redundant);
   const unsigned not_lit = NOT (lit);
 #ifndef INLINE_ASSIGN
-  value *values = solver->values;
-  assigned *assigned = solver->assigned;
+  value *__restrict values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
 #endif
   assert (!values[lit]);
   assert (!values[not_lit]);
@@ -122,7 +122,7 @@ kissat_assign_binary (kissat * solver,
 {
   assert (VALUE (other) < 0);
 #ifndef INLINE_ASSIGN
-  assigned *assigned = solver->assigned;
+  assigned *__restrict assigned = solver->assigned;
 #endif
   const unsigned other_idx = IDX (other);
   struct assigned *a = assigned + other_idx;
@@ -149,8 +149,8 @@ kissat_assign_reference (kissat * solver,
 {
   assert (reason == kissat_dereference_clause (solver, ref));
 #ifndef INLINE_ASSIGN
-  assigned *assigned = solver->assigned;
-  value *values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
+  value *__restrict values = solver->values;
 #endif
   const unsigned level =
     kissat_assignment_level (solver, values, assigned, lit, reason);

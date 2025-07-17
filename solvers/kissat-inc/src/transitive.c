@@ -15,7 +15,7 @@ static void
 transitive_assign(kissat *solver, unsigned lit)
 {
   LOG("transitive assign %s", LOGLIT(lit));
-  value *values = solver->values;
+  value *__restrict values = solver->values;
   const unsigned not_lit = NOT(lit);
   assert(!values[lit]);
   assert(!values[not_lit]);
@@ -28,7 +28,7 @@ static void
 transitive_backtrack(kissat *solver, unsigned saved)
 {
   assert(saved <= SIZE_STACK(solver->trail));
-  value *values = solver->values;
+  value *__restrict values = solver->values;
   while (SIZE_STACK(solver->trail) > saved)
   {
     const unsigned lit = POP_STACK(solver->trail);

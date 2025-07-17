@@ -25,7 +25,7 @@ flush_large_watches (kissat * solver,
   else
     LOG ("keep watching redundant binary clauses");
 #endif
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   size_t flushed = 0, collected = 0;
   watches *all_watches = solver->watches;
   for (all_literals (lit))
@@ -221,8 +221,8 @@ resume_watching_large_clauses_after_elimination (kissat * solver)
 #endif
   const flags *flags = solver->flags;
   watches *watches = solver->watches;
-  const value *values = solver->values;
-  const assigned *assigned = solver->assigned;
+  const value *__restrict values = solver->values;
+  const assigned *__restrict assigned = solver->assigned;
   const word *arena = BEGIN_STACK (solver->arena);
 
   for (all_clauses (c))

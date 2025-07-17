@@ -22,8 +22,8 @@ non_watching_propagate_literal (kissat * solver,
   unsigned ticks = 1 + kissat_cache_lines (watches->size, sizeof (watch));
 
   const word *arena = BEGIN_STACK (solver->arena);
-  assigned *assigned = solver->assigned;
-  value *values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
+  value *__restrict values = solver->values;
 
   const unsigned level = solver->level;
 

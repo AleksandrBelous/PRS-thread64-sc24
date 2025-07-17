@@ -283,7 +283,7 @@ remove_representative_equivalences (kissat * solver,
 {
   if (!solver->inconsistent)
     {
-      value *values = solver->values;
+      value *__restrict values = solver->values;
       const bool incremental = GET_OPTION (incremental);
       for (all_variables (idx))
 	{
@@ -437,7 +437,7 @@ substitute_clauses (kissat * solver, unsigned *repr)
 {
   if (solver->inconsistent)
     return;
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   value *marks = solver->marks;
   size_t substituted = 0;
   size_t removed = 0;
