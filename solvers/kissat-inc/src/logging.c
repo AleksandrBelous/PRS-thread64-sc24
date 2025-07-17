@@ -1,4 +1,4 @@
-#if defined(LOGGING) && !defined(QUIET)
+#if defined(LOGGING) && !defined(QUIET) && !defined(NLOG)
 
 #include "colors.h"
 #include "inline.h"

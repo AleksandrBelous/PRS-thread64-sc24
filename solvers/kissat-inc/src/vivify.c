@@ -707,7 +707,7 @@ vivify_clause (kissat * solver, clause * c,
 
   vivify_sort_stack_by_counts (solver, sorted, counts);
 
-#if defined(LOGGING) && !defined(NOPTIONS)
+#if defined(LOGGING) && !defined(NOPTIONS) && !defined(NLOG)
   if (solver->options.log)
     {
       TERMINAL (stdout, 1);

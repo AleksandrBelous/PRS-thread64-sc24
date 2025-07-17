@@ -14,7 +14,7 @@ verbosity (kissat * solver)
 {
   if (!solver)
     return -1;
-#ifdef LOGGING
+#if defined(LOGGING) && !defined(NLOG)
   if (GET_OPTION (log))
     return 2;
 #endif
