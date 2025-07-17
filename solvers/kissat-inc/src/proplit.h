@@ -87,6 +87,8 @@ PROPAGATE_LITERAL (kissat * solver,
   const watch *end_large = END_LARGE_WATCHES (*watches), *pl = ql;
   unsigneds *delayed = &solver->delayed;
 
+  bool changed = false;
+
   uint64_t ticks = kissat_cache_lines (WATCHES_SIZE (*watches), sizeof (watch));
 
   clause *res = 0;
@@ -94,17 +96,24 @@ PROPAGATE_LITERAL (kissat * solver,
   while (pb != end_binary)
     {
       __builtin_prefetch (pb, 0, 1);
-      const watch head = *qb++ = *pb++;
+      const watch head = *pb++;
+      qb++;
       const unsigned blocking = head.binary.lit;
       assert (VALID_INTERNAL_LITERAL (blocking));
       const value blocking_value = values[blocking];
       if (blocking_value > 0)
-        continue;
+        {
+          if (changed)
+            qb[-1] = head;
+          continue;
+        }
       const bool redundant = head.binary.redundant;
       if (blocking_value < 0)
         {
           res = kissat_binary_conflict (solver, redundant,
                                         not_lit, blocking);
+          if (changed)
+            qb[-1] = head;
           break;
         }
       else
@@ -112,6 +121,8 @@ PROPAGATE_LITERAL (kissat * solver,
           assert (!blocking_value);
           kissat_assign_binary (solver, values, assigned,
                                 redundant, blocking, not_lit);
+          if (changed)
+            qb[-1] = head;
         }
     }
   SET_END_OF_BINARY_WATCHES (*watches, qb);
@@ -120,13 +131,21 @@ PROPAGATE_LITERAL (kissat * solver,
   while (pl != end_large)
     {
       __builtin_prefetch (pl, 0, 1);
-      const watch head = *ql++ = *pl++;
+      watch head = *pl++;
       const unsigned blocking = head.blocking.lit;
+      const watch tail = *pl++;
+      ql += 2;
       assert (VALID_INTERNAL_LITERAL (blocking));
-      const watch tail = *ql++ = *pl++;
       const value blocking_value = values[blocking];
       if (blocking_value > 0)
-        continue;
+        {
+          if (changed)
+            {
+              ql[-2] = head;
+              ql[-1] = tail;
+            }
+          continue;
+        }
           const reference ref = tail.raw;
           assert (ref < SIZE_STACK (solver->arena));
           clause *c = (clause *) (arena + ref);
@@ -134,13 +153,14 @@ PROPAGATE_LITERAL (kissat * solver,
 	  if (c == ignore)
 	    continue;
 #endif
-	  ticks++;
+          ticks++;
           if (c->garbage)
             {
               ql -= 2;
+              changed = true;
               continue;
             }
-	  unsigned *lits = BEGIN_LITS (c);
+          unsigned *lits = BEGIN_LITS (c);
 	  const unsigned other = lits[0] ^ lits[1] ^ not_lit;
 	  assert (lits[0] != lits[1]);
 	  assert (VALID_INTERNAL_LITERAL (other));
@@ -148,9 +168,17 @@ PROPAGATE_LITERAL (kissat * solver,
 	  assert (lit != other);
 	  const value other_value = values[other];
           if (other_value > 0)
-            ql[-2].blocking.lit = other;
-	  else
-	    {
+            {
+              if (head.blocking.lit != other)
+                {
+                  head.blocking.lit = other;
+                  changed = true;
+                }
+              if (changed)
+                ql[-2] = head;
+            }
+          else
+            {
 	      const unsigned *end_lits = lits + c->size;
 	      unsigned *searched = lits + c->searched;
 	      assert (c->lits + 2 <= searched);
@@ -177,39 +205,51 @@ PROPAGATE_LITERAL (kissat * solver,
 		    }
 		}
 
-	      if (replacement_value >= 0)
-		c->searched = r - c->lits;
+              if (replacement_value >= 0)
+                c->searched = r - c->lits;
 
-	      if (replacement_value > 0)
-		{
-		  assert (replacement != INVALID_LIT);
-                  ql[-2].blocking.lit = replacement;
-		}
-	      else if (!replacement_value)
-		{
-		  assert (replacement != INVALID_LIT);
-		  LOGREF (ref, "unwatching %s in", LOGLIT (not_lit));
+              if (replacement_value > 0)
+                {
+                  assert (replacement != INVALID_LIT);
+                  if (head.blocking.lit != replacement)
+                    {
+                      head.blocking.lit = replacement;
+                      changed = true;
+                    }
+                  if (changed)
+                    ql[-2] = head;
+                }
+              else if (!replacement_value)
+                {
+                  assert (replacement != INVALID_LIT);
+                  LOGREF (ref, "unwatching %s in", LOGLIT (not_lit));
                   ql -= 2;
-		  lits[0] = other;
-		  lits[1] = replacement;
-		  assert (lits[0] != lits[1]);
-		  *r = not_lit;
-		  kissat_delay_watching_large (solver, delayed,
-					       replacement, other, ref);
-		  ticks++;
-		}
-	      else if (other_value)
-		{
+                  lits[0] = other;
+                  lits[1] = replacement;
+                  assert (lits[0] != lits[1]);
+                  *r = not_lit;
+                  kissat_delay_watching_large (solver, delayed,
+                                               replacement, other, ref);
+                  ticks++;
+                  changed = true;
+                }
+              else if (other_value)
+                {
 		  assert (replacement_value < 0);
 		  assert (blocking_value < 0);
 		  assert (other_value < 0);
-		  LOGREF (ref, "conflicting");
-		  res = c;
-		  break;
-		}
+                  LOGREF (ref, "conflicting");
+                  if (changed)
+                    {
+                      ql[-2] = head;
+                      ql[-1] = tail;
+                    }
+                  res = c;
+                  break;
+                }
 #ifdef HYPER_PROPAGATION
-	      else if (hyper)
-		{
+              else if (hyper)
+                {
 		  assert (replacement_value < 0);
 		  unsigned dom = kissat_find_dominator (solver, other, c);
 		  if (dom != INVALID_LIT)
@@ -231,25 +271,31 @@ PROPAGATE_LITERAL (kissat * solver,
 		      delay_watching_hyper (solver, delayed, dom, other);
 		      delay_watching_hyper (solver, delayed, other, dom);
 
-		      kissat_delay_watching_large (solver, delayed,
-						   not_lit, other, ref);
+                      kissat_delay_watching_large (solver, delayed,
+                                                   not_lit, other, ref);
 
                       LOGREF (ref, "unwatching %s in", LOGLIT (not_lit));
                       ql -= 2;
-		    }
-		  else
-		    kissat_assign_reference (solver, values,
-					     assigned, other, ref, c);
-		}
+                      changed = true;
+                    }
+                  else
+                    kissat_assign_reference (solver, values,
+                                             assigned, other, ref, c);
+                }
 #endif
-	      else
-		{
-		  assert (replacement_value < 0);
-		  kissat_assign_reference (solver, values,
-					   assigned, other, ref, c);
-		}
-	    }
-	}
+              else
+                {
+                  assert (replacement_value < 0);
+                  kissat_assign_reference (solver, values,
+                                           assigned, other, ref, c);
+                }
+              if (changed)
+                {
+                  ql[-2] = head;
+                  ql[-1] = tail;
+                }
+            }
+        }
     }
   solver->ticks += ticks;
   solver->dps_ticks += ticks;
@@ -261,15 +307,21 @@ PROPAGATE_LITERAL (kissat * solver,
   while (pb != end_binary)
     {
       __builtin_prefetch (pb, 0, 1);
-      *qb++ = *pb++;
+      if (changed)
+        *qb++ = *pb++;
+      else
+        pb++;
     }
-  SET_END_OF_BINARY_WATCHES (*watches, qb);
+  SET_END_OF_BINARY_WATCHES (*watches, changed ? qb : pb);
   while (pl != end_large)
     {
       __builtin_prefetch (pl, 0, 1);
-      *ql++ = *pl++;
+      if (changed)
+        *ql++ = *pl++;
+      else
+        pl++;
     }
-  SET_END_OF_LARGE_WATCHES (*watches, ql);
+  SET_END_OF_LARGE_WATCHES (*watches, changed ? ql : pl);
 
 #ifdef HYPER_PROPAGATION
   watch_hyper_delayed (solver, delayed);
