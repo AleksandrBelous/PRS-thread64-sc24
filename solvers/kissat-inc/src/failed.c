@@ -36,7 +36,7 @@ schedule_probes (kissat * solver, unsigned round, unsigneds * roots)
   assert (EMPTY_STACK (*roots));
   LOG ("collecting roots of binary implication graph");
   assert (solver->watching);
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   value *marks = solver->marks;
   flags *flags = solver->flags;
   for (all_variables (idx))
@@ -220,7 +220,7 @@ probe_round (kissat * solver, unsigned round,
   const unsigned scheduled = SIZE_STACK (*probes);
 #endif
   unsigned *stamps = kissat_calloc (solver, LITS, sizeof *stamps);
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   flags *flags = solver->flags;
 
 #if !defined(NDEBUG) && !defined(NMETRICS)

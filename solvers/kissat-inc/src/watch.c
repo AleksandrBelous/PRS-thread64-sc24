@@ -62,8 +62,8 @@ kissat_watch_large_clauses (kissat * solver)
   LOG ("watching all large clauses");
   assert (solver->watching);
 
-  const value *values = solver->values;
-  const assigned *assigned = solver->assigned;
+  const value *__restrict values = solver->values;
+  const assigned *__restrict assigned = solver->assigned;
   watches *watches = solver->watches;
   const word *arena = BEGIN_STACK (solver->arena);
 

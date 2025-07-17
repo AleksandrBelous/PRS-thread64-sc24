@@ -18,8 +18,8 @@ flush_watched_clauses_by_literal (kissat * solver, litpairs * hyper,
 {
   assert (start != INVALID_REF);
 
-  const value *values = solver->values;
-  const assigned *all_assigned = solver->assigned;
+  const value *__restrict values = solver->values;
+  const assigned *__restrict all_assigned = solver->assigned;
 
   const value lit_value = values[lit];
   const assigned *lit_assigned = all_assigned + IDX (lit);
@@ -295,8 +295,8 @@ move_redundant_clauses_to_the_end (kissat * solver, reference ref)
 
   clause *p = begin, *q = begin, *r = redundant;
 
-  const value *values = solver->values;
-  assigned *assigned = solver->assigned;
+  const value *__restrict values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
 
   clause *last_irredundant = kissat_last_irredundant_clause (solver);  
   while (p != end)
@@ -355,8 +355,8 @@ sparse_sweep_garbage_clauses (kissat * solver, bool compact, reference start)
   assert (EMPTY_STACK (solver->added));
   assert (EMPTY_STACK (solver->removed));
 
-  const value *values = solver->values;
-  assigned *assigned = solver->assigned;
+  const value *__restrict values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
 
   size_t flushed_garbage_clauses = 0;
   size_t flushed_satisfied_clauses = 0;
@@ -665,8 +665,8 @@ rewatch_clauses (kissat * solver, reference start)
   LOG ("rewatching clause[%zu] and following clauses", start);
   assert (solver->watching);
 
-  const value *values = solver->values;
-  const assigned *assigned = solver->assigned;
+  const value *__restrict values = solver->values;
+  const assigned *__restrict assigned = solver->assigned;
   watches *watches = solver->watches;
   const word *arena = BEGIN_STACK (solver->arena);
 

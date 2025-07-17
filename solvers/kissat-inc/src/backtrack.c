@@ -87,9 +87,9 @@ kissat_backtrack (kissat * solver, unsigned new_level)
   const unsigned new_size = new_frame->trail;
   SET_END_OF_STACK (solver->frames, new_frame);
 
-  value *values = solver->values;
+  value *__restrict values = solver->values;
   unsigned *trail = BEGIN_STACK (solver->trail);
-  assigned *assigned = solver->assigned;
+  assigned *__restrict assigned = solver->assigned;
 
   const unsigned old_size = SIZE_STACK (solver->trail);
   unsigned unassigned = 0, reassigned = 0;

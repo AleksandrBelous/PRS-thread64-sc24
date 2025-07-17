@@ -152,7 +152,7 @@ kissat_minimize_clause (kissat * solver)
 
   unsigned minimized = 0;
 
-  assigned *assigned = solver->assigned;
+  assigned *__restrict assigned = solver->assigned;
 
   for (const unsigned *p = q; p != end; p++)
     {

@@ -18,7 +18,7 @@ occurrences_literal (kissat * solver, unsigned lit, bool * update)
   watch *begin = BEGIN_WATCHES (*watches), *q = begin;
   const watch *end = END_WATCHES (*watches), *p = q;
 
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   const word *arena = BEGIN_STACK (solver->arena);
 
   bool failed = false;
@@ -114,7 +114,7 @@ generate_resolvents (kissat * solver, unsigned lit,
   tmp0.size = tmp1.size = 2;
 
   const word *arena = BEGIN_STACK (solver->arena);
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
   value *marks = solver->marks;
 
   const unsigned clslim = solver->bounds.eliminate.clause_size;

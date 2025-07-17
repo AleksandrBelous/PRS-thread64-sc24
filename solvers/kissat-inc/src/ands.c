@@ -22,7 +22,7 @@ kissat_find_and_gate (kissat * solver, unsigned lit, unsigned negative)
 
   const word *arena = BEGIN_STACK (solver->arena);
   value *marks = solver->marks;
-  const value *values = solver->values;
+  const value *__restrict values = solver->values;
 
   clause *base = 0;
   for (all_binary_large_watches (watch, *not_watches))

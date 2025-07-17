@@ -73,8 +73,8 @@ PROPAGATE_LITERAL (kissat * solver,
   assert (EMPTY_STACK (solver->delayed));
 
   const word *arena = BEGIN_STACK (solver->arena);
-  assigned *assigned = solver->assigned;
-  value *values = solver->values;
+  assigned *__restrict assigned = solver->assigned;
+  value *__restrict values = solver->values;
 
   const unsigned not_lit = NOT (lit);
 #ifdef HYPER_PROPAGATION
