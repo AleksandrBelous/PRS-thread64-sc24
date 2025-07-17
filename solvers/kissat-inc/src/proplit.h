@@ -93,6 +93,7 @@ PROPAGATE_LITERAL (kissat * solver,
 
   while (pb != end_binary)
     {
+      __builtin_prefetch (pb, 0, 1);
       const watch head = *qb++ = *pb++;
       const unsigned blocking = head.binary.lit;
       assert (VALID_INTERNAL_LITERAL (blocking));
@@ -118,6 +119,7 @@ PROPAGATE_LITERAL (kissat * solver,
   if (!res)
   while (pl != end_large)
     {
+      __builtin_prefetch (pl, 0, 1);
       const watch head = *ql++ = *pl++;
       const unsigned blocking = head.blocking.lit;
       assert (VALID_INTERNAL_LITERAL (blocking));
@@ -257,10 +259,16 @@ PROPAGATE_LITERAL (kissat * solver,
   }
 
   while (pb != end_binary)
-    *qb++ = *pb++;
+    {
+      __builtin_prefetch (pb, 0, 1);
+      *qb++ = *pb++;
+    }
   SET_END_OF_BINARY_WATCHES (*watches, qb);
   while (pl != end_large)
-    *ql++ = *pl++;
+    {
+      __builtin_prefetch (pl, 0, 1);
+      *ql++ = *pl++;
+    }
   SET_END_OF_LARGE_WATCHES (*watches, ql);
 
 #ifdef HYPER_PROPAGATION
