@@ -1,7 +1,7 @@
 #ifndef _logging_h_INCLUDED
 #define _logging_h_INCLUDED
 
-#if defined(LOGGING) && !defined(QUIET)
+#if defined(LOGGING) && !defined(QUIET) && !defined(NLOG)
 
 #include "extend.h"
 #include "reference.h"

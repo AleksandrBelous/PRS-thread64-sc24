@@ -4,6 +4,10 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#ifdef NOPTIONS
+#define NLOG
+#endif
+
 #define OPTIONS \
 OPTION( ands, 1, 0, 1, "extract and eliminate and gates") \
 OPTION( autarky, 1, 0, 1, "delay autarky reasoning") \

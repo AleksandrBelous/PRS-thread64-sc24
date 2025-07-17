@@ -298,7 +298,10 @@ kissat_checking (kissat * solver)
 static inline bool
 kissat_logging (kissat * solver)
 {
-#ifdef LOGGING
+#ifdef NLOG
+  (void) solver;
+  return false;
+#elif defined(LOGGING)
 #ifdef NOPTIONS
   (void) solver;
 #endif

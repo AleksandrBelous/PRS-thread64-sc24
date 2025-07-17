@@ -437,7 +437,7 @@ parse_options (application * application, int argc, char **argv)
 	  application->strict = PEDANTIC_PARSING;
 	  strict_option = arg;
 	}
-#if defined(LOGGING) && !defined(QUIET) && !defined(NOPTIONS)
+#if defined(LOGGING) && !defined(QUIET) && !defined(NOPTIONS) && !defined(NLOG)
       else if (!strcmp (arg, "-l"))
 	{
 	  int value = GET_OPTION (log);
