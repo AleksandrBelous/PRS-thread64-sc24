@@ -1,5 +1,6 @@
 #include "basesolver.hpp"
 #include "sharer.hpp"
+#include "../utils/hints.hpp"
 
 int basesolver::get_period() {
     boost::mutex::scoped_lock lock(mtx);
@@ -105,7 +106,7 @@ void cbk_start_new_period(void *solver) {
     sharer *share = S->in_sharer;
     int should_free = 1;
  
-    if (S->period >= S->controller->get_winner_period()) {
+    if (unlikely(S->period >= S->controller->get_winner_period())) {
         S->internal_terminate();
         S->terminate();
         return;
@@ -113,7 +114,7 @@ void cbk_start_new_period(void *solver) {
     S->select_clauses();
     S->inc_period();
     should_free = share->import_clauses(S->id);
-    if (should_free == -1) {
+    if (unlikely(should_free == -1)) {
         S->internal_terminate();
         S->terminate();
     }

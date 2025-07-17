@@ -2,6 +2,7 @@
 #include "basesolver.hpp"
 #include "sharer.hpp"
 #include "clause.hpp"
+#include "../utils/hints.hpp"
 #include <unistd.h>
 #include <boost/thread/thread.hpp>
 
@@ -15,7 +16,7 @@ void * share_worker(void *arg) {
         usleep(sq->share_intv);
         auto clk_now = std::chrono::high_resolution_clock::now();
         int solve_time = std::chrono::duration_cast<std::chrono::milliseconds>(clk_now - clk_st).count();
-        if (terminated) break;
+        if (unlikely(terminated)) break;
         for (int i = 0; i < sq->producers.size(); i++) {
             sq->cls.clear();
             sq->producers[i]->export_clauses_to(sq->cls);
@@ -46,19 +47,19 @@ void * share_worker(void *arg) {
  
 int sharer::import_clauses(int id) {
     int current_period = producers[id]->get_period() - 1, import_period = current_period - margin;
-    if (import_period < 0) return 0;
+    if (unlikely(import_period < 0)) return 0;
     basesolver *t = producers[id];
     for (int i = 0; i < producers.size(); i++) {
         if (i == id) continue;
         basesolver *s = producers[i];
         
         boost::mutex::scoped_lock lock(s->mtx);
-        while (s->period <= import_period && s->terminate_period > import_period && !s->terminated) {
+        while (s->period <= import_period && s->terminate_period > import_period && likely(!s->terminated)) {
             s->cond.wait(lock);
         }
         
-        if (s->terminated) return -1;
-        if (s->terminate_period <= import_period) return -1; 
+        if (unlikely(s->terminated)) return -1;
+        if (unlikely(s->terminate_period <= import_period)) return -1;
         
         period_clauses *pc = s->pq.find(import_period);
         
@@ -79,7 +80,7 @@ int sharer::sort_clauses(int x) {
     int space = share_lits;
     for (int i = 0; i < bucket[x].size(); i++) {
         int clause_num = space / (i + 1);
-        if (!clause_num) break;
+        if (unlikely(!clause_num)) break;
         if (clause_num >= bucket[x][i].size()) {
             space -= bucket[x][i].size() * (i + 1);
             for (int j = 0; j < bucket[x][i].size(); j++)

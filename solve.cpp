@@ -1,4 +1,5 @@
 #include "light.hpp"
+#include "utils/hints.hpp"
 #include "workers/basekissat.hpp"
 #include "workers/sharer.hpp"
 #include <unistd.h>
@@ -26,12 +27,12 @@ void *read_worker(void *arg)
 void *solve_worker(void *arg)
 {
     basesolver *sq = (basesolver *)arg;
-    while (!terminated)
+    while (likely(!terminated))
     {
         int res = sq->solve();
         if (sq->controller->opt->DCE)
         {
-            if (res)
+            if (unlikely(res))
             {
                 terminated = 1;
                 result = res;
@@ -43,7 +44,7 @@ void *solve_worker(void *arg)
         }
         else
         {
-            if (res && !terminated)
+            if (unlikely(res) && likely(!terminated))
             {
                 terminated = 1;
                 sq->controller->terminate_workers();
@@ -153,12 +154,12 @@ int light::solve()
         pthread_create(&ptr[i], NULL, solve_worker, workers[i]);
     }
 
-    while (!terminated)
+    while (likely(!terminated))
     {
         usleep(100000);
         auto clk_now = std::chrono::high_resolution_clock::now();
         int solve_time = std::chrono::duration_cast<std::chrono::seconds>(clk_now - clk_st).count();
-        if (solve_time >= OPT(cutoff))
+        if (unlikely(solve_time >= OPT(cutoff)))
         {
             terminated = 1;
             terminate_workers();

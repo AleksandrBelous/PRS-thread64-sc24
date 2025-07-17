@@ -1,6 +1,7 @@
 #ifndef _sharer_hpp_INCLUDED
 #define _sharer_hpp_INCLUDED
 #include "../utils/paras.hpp"
+#include "../utils/hints.hpp"
 #include <boost/thread.hpp>
 
 class basesolver;
@@ -35,7 +36,7 @@ public:
     }
     void waiting_for_all_ready() {
         boost::mutex::scoped_lock lock(mtx);
-        while (waitings != producers.size() && !terminated) {
+        while (waitings != producers.size() && likely(!terminated)) {
             cond.wait(lock);
         }
     }
