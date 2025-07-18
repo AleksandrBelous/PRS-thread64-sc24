@@ -1,0 +1,10 @@
+Average solving time for 10 CNFs: 2.746 seconds
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls   s/call   s/call  name    
+ 41.55       4.44      4.44                              kissat_search_propagate
+  5.15       5.11      0.66                              kissat_init_limits
+  4.46       5.56      0.46                              kissat_probing_propagate
+  4.70       6.01      0.45                              walking_phase
+  4.38       6.45      0.44                              kissat_reset_alarm
