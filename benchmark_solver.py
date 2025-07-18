@@ -25,12 +25,12 @@ class GprofEntry:
 
 def run_solver(solver: str, cnf: str, n_threads: int) -> float:
     """Run solver on a single CNF file and return elapsed time."""
-    print(f"  [*] Запуск решения {cnf}")
+    print(f"    [*] Запуск решения {cnf}")
     start = time.perf_counter()
     subprocess.run([solver, cnf, f"--nThreads={n_threads}"], stdout=subprocess.DEVNULL)
     end = time.perf_counter()
     elapsed = end - start
-    print(f"      [+] Время: {elapsed:.3f} сек")
+    print(f"        [+] Время: {elapsed:.3f} сек")
     return elapsed
 
 
@@ -142,7 +142,7 @@ def main():
         )
         total_time += elapsed
         count += 1
-        print(f"      [=] Суммарно: {elapsed:.3f} сек")
+        print(f"        [=] Суммарно: {elapsed:.3f} сек")
         unit, prof = collect_gprof(args.solver)
         if prof:
             sample_units.append(unit)
