@@ -119,7 +119,7 @@ def main():
     parser.add_argument("solver", help="Path to solver binary")
     parser.add_argument("cnf_folder", help="Directory with CNF files")
     parser.add_argument(
-        "--threads", type=int, default=4, help="Number of threads for solver"
+        "--threads", type=int, default=1, help="Number of threads for solver"
     )
     args = parser.parse_args()
 
